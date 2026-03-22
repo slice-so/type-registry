@@ -1,0 +1,20 @@
+[profile.default]
+bytecode_hash = "none"
+optimizer = true
+optimizer_runs = 100000
+dynamic_test_linking = true
+
+[profile.ci]
+verbosity = 4
+
+[profile.ci.fuzz]
+runs = 10000
+
+[rpc_endpoints]
+mainnet = "${RPC_URL_MAINNET}"
+op = "${RPC_URL_OPTIMISM}"
+base = "${RPC_URL_BASE}"
+base-goerli = "${RPC_URL_BASE_GOERLI}"
+
+[etherscan]
+mainnet = { key="${ETHERSCAN_KEY}", chain=1 }
