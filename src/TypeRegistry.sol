@@ -50,7 +50,7 @@ contract TypeRegistry is ITypeRegistry {
         typeEntry.description = description;
         typeEntry.specURI = specURI;
 
-        uint16 version;
+        uint96 version;
         unchecked {
             version = ++typeEntry.version;
         }
@@ -68,7 +68,7 @@ contract TypeRegistry is ITypeRegistry {
             string memory description,
             string memory specURI,
             address registrant,
-            uint16 version
+            uint96 version
         )
     {
         TypeEntry memory typeEntry = typeEntries[selector];
@@ -103,8 +103,8 @@ contract TypeRegistry is ITypeRegistry {
 
         bytes memory canonicalEncoded = abi.encodePacked(functionName, "(");
         bytes memory declarationEncoded = abi.encodePacked(functionName, "(");
-        uint256 cursor = 0;
-        uint256 indexedCount = 0;
+        uint256 cursor;
+        uint256 indexedCount;
 
         while (cursor < inputs.length) {
             if (cursor != 0) {
@@ -154,7 +154,7 @@ contract TypeRegistry is ITypeRegistry {
 
         (canonicalEncoding, declarationEncoding, nextIndex) = _encodeBaseType(components, component, index, depth);
 
-        for (uint256 i = 0; i < component.arrayDimensions.length; ++i) {
+        for (uint256 i; i < component.arrayDimensions.length; ++i) {
             uint256 dimension = component.arrayDimensions[i];
 
             if (dimension == 0) {
@@ -204,38 +204,24 @@ contract TypeRegistry is ITypeRegistry {
             revert UnexpectedTupleComponents();
         }
 
-        nextIndex = index + 1;
+        unchecked {
+            nextIndex = index + 1;
+        }
 
         if (baseType == BaseType.Address) {
-            if (component.size != 0) {
-                revert InvalidTypeSize(baseType, component.size);
-            }
-
-            return ("address", "address", nextIndex);
+            return _encodeUnsizedType(baseType, component.size, "address", nextIndex);
         }
 
         if (baseType == BaseType.Bool) {
-            if (component.size != 0) {
-                revert InvalidTypeSize(baseType, component.size);
-            }
-
-            return ("bool", "bool", nextIndex);
+            return _encodeUnsizedType(baseType, component.size, "bool", nextIndex);
         }
 
         if (baseType == BaseType.String) {
-            if (component.size != 0) {
-                revert InvalidTypeSize(baseType, component.size);
-            }
-
-            return ("string", "string", nextIndex);
+            return _encodeUnsizedType(baseType, component.size, "string", nextIndex);
         }
 
         if (baseType == BaseType.Bytes) {
-            if (component.size != 0) {
-                revert InvalidTypeSize(baseType, component.size);
-            }
-
-            return ("bytes", "bytes", nextIndex);
+            return _encodeUnsizedType(baseType, component.size, "bytes", nextIndex);
         }
 
         if (baseType == BaseType.BytesN) {
@@ -270,9 +256,12 @@ contract TypeRegistry is ITypeRegistry {
 
         canonicalEncoding = "(";
         declarationEncoding = "(";
-        nextIndex = index + 1;
 
-        for (uint256 i = 0; i < component.childCount; ++i) {
+        unchecked {
+            nextIndex = index + 1;
+        }
+
+        for (uint256 i; i < component.childCount; ++i) {
             if (i != 0) {
                 canonicalEncoding = abi.encodePacked(canonicalEncoding, ",");
                 declarationEncoding = abi.encodePacked(declarationEncoding, ",");
@@ -282,11 +271,14 @@ contract TypeRegistry is ITypeRegistry {
                 revert MalformedTypeTree();
             }
 
-            (bytes memory childCanonicalEncoding, bytes memory childDeclarationEncoding, uint256 followingIndex) =
-                _encodeComponent(components, nextIndex, depth + 1);
-            canonicalEncoding = abi.encodePacked(canonicalEncoding, childCanonicalEncoding);
-            declarationEncoding = abi.encodePacked(declarationEncoding, childDeclarationEncoding);
-            nextIndex = followingIndex;
+            unchecked {
+                (bytes memory childCanonicalEncoding, bytes memory childDeclarationEncoding, uint256 followingIndex) =
+                    _encodeComponent(components, nextIndex, depth + 1);
+
+                canonicalEncoding = abi.encodePacked(canonicalEncoding, childCanonicalEncoding);
+                declarationEncoding = abi.encodePacked(declarationEncoding, childDeclarationEncoding);
+                nextIndex = followingIndex;
+            }
         }
 
         canonicalEncoding = abi.encodePacked(canonicalEncoding, ")");
@@ -315,6 +307,18 @@ contract TypeRegistry is ITypeRegistry {
         canonicalEncoding = abi.encodePacked(prefix, uint256(size).toString());
         declarationEncoding = canonicalEncoding;
         followingIndex = nextIndex;
+    }
+
+    function _encodeUnsizedType(BaseType baseType, uint16 size, bytes memory prefix, uint256 nextIndex)
+        internal
+        pure
+        returns (bytes memory canonicalEncoding, bytes memory declarationEncoding, uint256 followingIndex)
+    {
+        if (size != 0) {
+            revert InvalidTypeSize(baseType, size);
+        }
+
+        return (prefix, prefix, nextIndex);
     }
 
     /// @notice Validates the width of a fixed-size `bytesN` type.

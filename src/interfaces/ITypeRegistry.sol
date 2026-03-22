@@ -41,7 +41,7 @@ interface ITypeRegistry {
     event TypeRegistered(
         address indexed registrant,
         bytes4 indexed selector,
-        uint16 version,
+        uint96 version,
         string canonicalSignature,
         string declarationSignature,
         string description,
@@ -53,7 +53,7 @@ interface ITypeRegistry {
     /// @param version Monotonic version after the update has been applied.
     /// @param description New descriptive text stored for the selector.
     /// @param specURI New URI pointing to the external specification or schema.
-    event TypeUpdated(bytes4 indexed selector, uint16 version, string description, string specURI);
+    event TypeUpdated(bytes4 indexed selector, uint96 version, string description, string specURI);
 
     /// @notice Registers a new type definition and returns its derived selector.
     /// @dev Reverts if another entry already exists for the derived selector.
@@ -85,6 +85,6 @@ interface ITypeRegistry {
             string memory description,
             string memory specURI,
             address registrant,
-            uint16 version
+            uint96 version
         );
 }

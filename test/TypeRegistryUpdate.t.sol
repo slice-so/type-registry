@@ -26,7 +26,7 @@ contract TypeRegistryUpdateTest is SetupTest {
             string memory description,
             string memory specURI,
             address registrant,
-            uint16 version
+            uint96 version
         ) = registry.getType(selector);
 
         assertEq(canonicalSignature, "metadata(address,(string,(uint256,bytes32)[])[],bytes32[2])");

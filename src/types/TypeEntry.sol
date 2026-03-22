@@ -10,7 +10,7 @@ pragma solidity ^0.8.30;
 /// @param specURI URI pointing to a specification, schema, or external reference.
 struct TypeEntry {
     address registrant;
-    uint16 version;
+    uint96 version;
     string canonicalSignature;
     string declarationSignature;
     string description;
